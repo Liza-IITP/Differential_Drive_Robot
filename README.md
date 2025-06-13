@@ -1,10 +1,6 @@
 # Differential_Drive_Robot
 
-This mini project simulates a **2-wheel differential drive robot** using **ROS 2 (Humble)** and **Gazebo**. It includes:
-- URDF/Xacro robot model
-- Launch files for Gazebo simulation
-- ROS 2 nodes for controlling robot movement
-
+This mini project simulates a **2-wheel differential drive robot** using **ROS 2 (Humble)** and **Gazebo**. 
 ## 📁 Folder Structure
 ```bash
 ws_ddmobile/
