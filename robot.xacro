@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+<!-- URDF DESCRIPTION OF THE DIFFERENTIAL DRIVE ROBOT -->
+<robot name="differential_drive_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<!-- BODY DIMENSIONS -->
+<xacro:property name="body_link_x_dim" value="1"/>
+<xacro:property name="body_link_y_dim" value="0.6"/>
+<xacro:property name="body_link_z_dim" value="0.3"/>
+
+<!-- Wheel dimensions and locations -->
+<xacro:property name="wheel_link_radius" value="0.15"/>
+<xacro:property name="wheel_link_length" value="0.1"/>
+<xacro:property name="wheel_link_z_location" value="-0.1"/>
+
+<!-- Castor sphere -->
+<xacro:property name="caster_link_radius" value="0.15"/>
+<xacro:property name="caster_link_z_location" value="-0.1"/>
+
+<!-- Material density -->
+<xacro:property name="material_density" value="2710.0"/>
+<xacro:property name="wheel_density" value="2710.0"/>
+<xacro:property name="caster_density" value="2710.0"/>
+
+<!-- Pi constant -->
+<xacro:property name="pi_constant" value="3.14159265358979323846"/>
+
+<!-- Robot body mass, wheel mass, and caster mass -->
+<xacro:property name="body_mass" value="${material_density*body_link_x_dim*body_link_y_dim*body_link_z_dim}"/>
+<xacro:property name="wheel_mass" value="${wheel_density*pi_constant*wheel_link_radius*wheel_link_radius*wheel_link_length}"/>
+<xacro:property name="caster_mass" value="${caster_density*(4.0/3.0)*pi_constant*caster_link_radius*caster_link_radius*caster_link_radius}"/>
+
+<!-- Moments of inertia of the wheel  -->
+<xacro:property name="Iz_wheel" value="${0.5*wheel_mass*wheel_link_radius*wheel_link_radius}"/>
+<xacro:property name="I_wheel" value="${(1.0/12.0)*wheel_mass*(3.0*wheel_link_radius*wheel_link_radius + wheel_link_length*wheel_link_length)}"/>
+
+<!-- Moments of inertia of the caster -->
+<xacro:property name="I_caster" value="${(2.0/5.0)*caster_mass*caster_link_radius*caster_link_radius}"/>
+
+
+<xacro:macro name="inertial_wheel">
+    <inertial>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <mass value="${wheel_mass}"/>
+        <inertia ixx="${I_wheel}" ixy="0" ixz="0" iyy="${I_wheel}" iyz="0" izz="${Iz_wheel}"/>
+
+    </inertial>
+
+</xacro:macro>
+
+
+<xacro:macro name="inertial_caster">
+    <inertial>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <mass value="${caster_mass}"/>
+        <inertia ixx="${I_caster}" ixy="0" ixz="0" iyy="${I_caster}" iyz="0" izz="${I_caster}"/>
+    </inertial>
+</xacro:macro>
+
+<!-- motion control driver -->
+<xacro:include filename="$(find mobile_dd_robot)/model/robot.gazebo" />
+
+<link name="dummy">
+</link>
+
+<joint name="dummy_joint" type="fixed">
+    <parent link="dummy"/>
+    <child link="body_link"/>
+    </joint>
+
+<link name="body_link">
+    
+    <visual>
+        <geometry>
+            <box size="${body_link_x_dim} ${body_link_y_dim} ${body_link_z_dim}" />
+
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        </visual>
+
+        <collision>
+        <geometry>
+            <box size="${body_link_x_dim} ${body_link_y_dim} ${body_link_z_dim}" />
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+        </geometry>
+        </collision>
+
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value="${body_mass}"/>
+            <inertia ixx="${(1.0/12.0)*body_mass*(body_link_y_dim*body_link_y_dim + body_link_z_dim*body_link_z_dim)}" 
+                     ixy="0" 
+                     ixz="0" 
+                     iyy="${(1.0/12.0)*body_mass*(body_link_x_dim*body_link_x_dim + body_link_z_dim*body_link_z_dim)}" 
+                     iyz="0" 
+                     izz="${(1.0/12.0)*body_mass*(body_link_x_dim*body_link_x_dim + body_link_y_dim*body_link_y_dim)}"/>
+        </inertial>
+</link>
+
+<joint name="wheel1_joint" type="continuous">
+    <parent link="body_link"/>
+    <child link="wheel1_link"/>
+    <origin xyz="${-2*wheel_link_radius} ${-body_link_y_dim/2-wheel_link_length/2} ${wheel_link_z_location}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="1000" velocity="1000"/>
+    <dynamics damping="1.0" friction="1.0"/>
+</joint>
+
+<link name="wheel1_link">
+    <visual>
+        <origin rpy="1.570795 0 0" xyz="0 0 0"/>
+        <geometry>
+            <cylinder radius="${wheel_link_radius}" length="${wheel_link_length}"/>
+        </geometry>
+    </visual>
+
+    <collision>
+        <origin rpy="1.570795 0 0" xyz="0 0 0"/>
+        <geometry>
+            <cylinder radius="${wheel_link_radius}" length="${wheel_link_length}"/>
+        </geometry>
+    </collision>
+    <xacro:inertial_wheel/>
+</link>
+
+<joint name="wheel2_joint" type="continuous">
+    <parent link="body_link"/>
+    <child link="wheel2_link"/>
+    <origin xyz="${-2*wheel_link_radius} ${body_link_y_dim/2+wheel_link_length/2} ${wheel_link_z_location}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="1000" velocity="1000"/>
+    <dynamics damping="1.0" friction="1.0"/>
+</joint>
+
+<link name="wheel2_link">
+    <visual>
+        <origin rpy="1.570795 0 0" xyz="0 0 0"/>
+        <geometry>
+            <cylinder radius="${wheel_link_radius}" length="${wheel_link_length}"/>
+        </geometry>
+    </visual>
+    <collision>
+        <origin rpy="1.570795 0 0" xyz="0 0 0"/>
+        <geometry>
+            <cylinder radius="${wheel_link_radius}" length="${wheel_link_length}"/>
+        </geometry>
+    </collision>
+    <xacro:inertial_wheel/>
+</link>
+
+
+<joint name="caster_joint" type="fixed">
+    <parent link="body_link"/>
+    <child link="caster_link"/>
+    <origin xyz="${2*caster_link_radius} 0 ${caster_link_z_location}" rpy="0 0 0"/>
+</joint>
+
+
+<link name="caster_link">
+    <visual>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+            <sphere radius="${caster_link_radius}"/>
+        </geometry>
+    </visual>
+    <collision>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+            <sphere radius="${caster_link_radius}"/>
+        </geometry>
+    </collision>
+    <xacro:inertial_caster/>
+</link>
+
+
+</robot>
