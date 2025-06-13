@@ -6,6 +6,7 @@ This mini project simulates a **2-wheel differential drive robot** using **ROS 2
 - ROS 2 nodes for controlling robot movement
 
 ## 📁 Folder Structure
+```bash
 ws_ddmobile/
 ├── src/
 │   └── mobile_dd_robot/
