@@ -1,92 +1,83 @@
-# JUST TO MAKE SURE OS IS UBUNTU 22.04.4(JAMMY JELLYFISH) AND ROS ENVIRONMENT IS HUMBLE
-cat /etc/os-release (Displays the operating system's release information)
-source /opt/ros/humble/setup.bash (Sets up the environment variables required to use ROS 2 Humble in your terminal session)
-printenv ROS_DISTRO (Prints the value of the environment variable ROS_DISTRO)
+#!/bin/bash
 
-# EVERY TIME YOU WANT TO DO SOMETHING IN ROS2 , NEED TO SOURCE THE BASE ENVIRONMENT
+echo "=== Checking OS and ROS Distro ==="
+cat /etc/os-release
+printenv ROS_DISTRO  # Should be 'humble'
+
+echo "=== Sourcing ROS 2 Humble Environment ==="
 source /opt/ros/humble/setup.bash
+
+echo "=== Updating package list ==="
 sudo apt-get update
-sudo apt-get upgrade
-(Updates and upgrades installed software packages)
 
-# RESTART THE COMPUTER , PACKAGES INSTALLATIONS
-source /opt/ros/humble/setup.bash
-sudo apt-get install gedit (GUI text editor to open .xacro, .launch.py, .urdf, .yaml, etc.)
-sudo apt install ros-humble-joint-state-publisher (It's a tool/node that publishes joint states (like position, velocity) of robot parts to the /joint_states topic.)
-sudo apt install ros-humble-joint-state-publisher-gui (Installs the GUI version of the joint_state_publisher.)
-sudo apt install ros-humble-xacro (Installs xacro, a ROS package for XML macro processing.)
-sudo apt-get install ros-humble-ros-gz (Installs the ROS-GZ bridge packages for ROS 2 Humble)
-sudo apt install ros-humble-gazebo-ros-pkgs (Installs Gazebo plugins for ROS 2, used with Gazebo Classic.)
-sudo apt install ros-humble-ros-core 
-(Installs the ROS 2 core packages only, minimal install:
-ros2cli, rclcpp, rosgraph, std_msgs, roslaunch, etc.
-No simulation, no visualization, no sensors, no navigation.)
-sudo apt install ros-humble-geometry2 (geometry2 is a ROS 2 library for keeping track of coordinate frames over time)
-sudo apt-get install ros-humble-gazebo-msgs(Enables communication between ROS nodes and Gazebo simulation)
-sudo apt-get install ros-humble-gazebo-plugins(Connect your robot in Gazebo to ROS 2 topics (/cmd_vel, /odom, etc.))
-sudo apt-get install ros-humble-ros-ign-bridge(Enables message bridging between ROS 2 and Gazebo (Ignition))
-sudo apt-get install ros-humble-teleop-twist-keyboard(Node: teleop_twist_keyboard
-A command-line ROS node that lets you control a robot with the keyboard using WASD keys)
-# JUST TYPE IN GAZEBO IN TERMINAL TO SEE IF IT'S PROPERLY INSTALLED
-gazebo --version (11.10.2)
+echo "=== Installing required ROS 2 packages ==="
+sudo apt install -y \
+    ros-humble-joint-state-publisher \
+    ros-humble-joint-state-publisher-gui \
+    ros-humble-xacro \
+    ros-humble-gazebo-ros-pkgs \
+    ros-humble-gazebo-msgs \
+    ros-humble-gazebo-plugins \
+    ros-humble-teleop-twist-keyboard
 
-# WORKSPACE AND PACKAGE CREATION (NEW TERMINAL)
-source /opt/ros/humble/setup.bash
+# Optional packages (uncomment if needed)
+# sudo apt install ros-humble-ros-ign-bridge     # Only for Gazebo Harmonic / Ignition
+# sudo apt install ros-humble-geometry2          # Only if using tf2
+# sudo apt install gedit                         # Only if you prefer GUI text editor
+
+echo "=== Checking Gazebo version (should be 11.x for Gazebo Classic) ==="
+gazebo --version
+
+echo "=== Creating workspace and package ==="
 mkdir -p ~/ws_ddmobile/src
-cd ~/ws_ddmobile
-colcon build (Builds all ROS 2 packages in src/)
 cd ~/ws_ddmobile/src
-ros2 pkg create --build-type ament_cmake mobile_dd_robot(using CMake (ament_cmake) as your build system,the name of new pkg is mobile_dd_robot)
-cd ~/ws_ddmobile/src/mobile_dd_robot/
-mkdir launch model ( Launch will contain python launch file to run model in gazebo , model contains xacro and gazebo file)
-(# ws_ddmobile -> src ->  mobile_dd_robot -> launch , model)
-cd ~/ws_ddmobile/
-colcon build
 
-# XACRO URDF FILE AND GAZEBO FILE
-cd ~/ws_ddmobile/src/mobile_dd_robot/model
-gedit robot.xacro (TYPE THE XACRO FILE)
-----------------------------
-gedit robot.gazebo (TYPE THE GAZEBO FILE)
-----------------------------
-# SAVE THESE 
-ls -la(ensure both files are saved)
+source /opt/ros/humble/setup.bash
+ros2 pkg create --build-type ament_cmake mobile_dd_robot
 
-# LAUNCH 
-cd ~/ws_ddmobile/src/mobile_dd_robot/launch
-gedit gazebo_model.launch.py(Type the python file)
------------------------
-#FINAL STEPS
-cd ~/ws_ddmobile/src/mobile_dd_robot
+cd mobile_dd_robot
+mkdir launch model
 
-gedit package.xml
+echo "=== Create robot.xacro and robot.gazebo ==="
+cd model
+gedit robot.xacro &
+gedit robot.gazebo &
 
-# (include these lines after build tools to add the dependencies)
-<exec_depend>joint_state_publisher</exec_depend>
-<exec_depend>robot_state_publisher</exec_depend>
-<exec_depend>gazebo_ros</exec_depend>
-<exec_depend>xacro</exec_depend>
-<exec_depend>ros_gz_bridge</exec_depend>
+echo "=== Create launch file ==="
+cd ../launch
+gedit gazebo_model.launch.py &
 
-# To adjust CMakeLists.txt
-cd ~/ws_ddmobile/src/mobile_dd_robot
-gedit CMakeLists.txt
+echo "=== Add dependencies to package.xml ==="
+cd ..
+gedit package.xml &
 
-# (then above if(build_testing) type)
-install(
-DIRECTORY launch model 
-DESTINATION share/$(PROJECT_NAME)
-)
+# Manually add these lines inside <package> after the build tool declaration:
+# <exec_depend>joint_state_publisher</exec_depend>
+# <exec_depend>robot_state_publisher</exec_depend>
+# <exec_depend>gazebo_ros</exec_depend>
+# <exec_depend>xacro</exec_depend>
+# <exec_depend>ros_gz_bridge</exec_depend>  # Optional
 
-# PERFORM FINAL BUILD OF WORKSPACE
+echo "=== Modify CMakeLists.txt to install launch and model folders ==="
+gedit CMakeLists.txt &
+
+# Add the following above the `if(BUILD_TESTING)` block:
+# install(
+#   DIRECTORY launch model
+#   DESTINATION share/${PROJECT_NAME}
+# )
+
+echo "=== Building the workspace ==="
 cd ~/ws_ddmobile
 colcon build
 
-# SOURCE THE PACKAGE
+echo "=== Sourcing the environment again ==="
 source /opt/ros/humble/setup.bash
+
+echo "=== Launching the robot in Gazebo ==="
 ros2 launch mobile_dd_robot gazebo_model.launch.py
 
-# GAZEBO OPENS , NOW KEEP THE PREVIOUS TERMINAL AS IT , OPEN A NEW TERMINAL AND TYPE
-cd ~/ws_ddmobile
-source /opt/ros/humble/setup.bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
+# In another terminal, run the teleop keyboard node:
+# cd ~/ws_ddmobile
+# source /opt/ros/humble/setup.bash
+# ros2 run teleop_twist_keyboard teleop_twist_keyboard
